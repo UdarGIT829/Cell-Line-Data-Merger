@@ -10,3 +10,5 @@ jobList = csv_to_data(inputFilename)
 
 #export data to xlsx using given format
 data_to_xlsx(jobList)     
+
+msm.clean_temp_files()

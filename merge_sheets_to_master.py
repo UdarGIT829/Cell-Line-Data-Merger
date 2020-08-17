@@ -22,19 +22,23 @@ def merge_to_csv():
 
     excelFiles = list()
     for path in Path(directory).rglob('*.xlsx'):
+        print(os.path.abspath(path))
         excelFiles.append(path)
 
     for excelFile in excelFiles:
-        if "master" in str(excelFile):
+        if "master.xlsx" in str(excelFile):
             excelFiles.remove(excelFile)
+        if "master.csv" in str(excelFile):
+            excelFile.remove(excelFile)
 
     if os.path.exists(temporaryCsvFileName):
         print("deleting old Master csv")
-        os.remove(temporaryCsvFileName)
+        #os.remove(temporaryCsvFileName)
 
     oldName = ""
     newName = ""
     nameBeenPrinted = False
+    print(excelFiles)
     for path in excelFiles:
         print( "Reading file: ", os.path.basename(path) )
         with xlrd.open_workbook(path) as workbook:
@@ -59,6 +63,7 @@ def merge_to_csv():
                         else:
                             col.writerow(sheet.row_values(row))
                     col.writerow('')
+                    file.close()
     return(temporaryCsvFileName)
 
 def csv_to_master(csvFileName):
@@ -85,6 +90,7 @@ def modified_to_csv(input, header=False):
             col.writerow(headerText)
         for row in input:
             col.writerow(row)
+        file.close()
     return finalCsvFileName
 
 def clean_temp_files():

@@ -76,10 +76,14 @@ class job:
 def csv_to_data(inputFilename):
     #input file as List of rows (2d matrix)
     structure = list()
-    with open(inputFilename) as csvfile:
+
+    print(os.path.exists(inputFilename))
+    
+    with open(inputFilename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             structure.append(row)
+        csvfile.close()
 
     print(len(structure))
     #flag for set of plates (1 control, multiple treatment plates); begin as false
@@ -99,7 +103,7 @@ def csv_to_data(inputFilename):
                         activeJob = None
                     name = str(row[0][6:])
                 elif "SET UP DATE:" in row[0]:
-                    date = str(row[0][12:])
+                    date = str(row[0][12:]).replace(" ", "")
                 #Ack Control Plate
                 elif "CONTROL PLATES:" in row[0]:
                     #if there was a job being entered into, save it into the list of jobs
