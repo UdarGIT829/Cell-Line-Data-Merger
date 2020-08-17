@@ -32,6 +32,8 @@ def merge_to_csv():
         print("deleting old Master csv")
         os.remove(temporaryCsvFileName)
 
+    oldName = ""
+    newName = ""
     nameBeenPrinted = False
     for path in excelFiles:
         print( "Reading file: ", os.path.basename(path) )
@@ -39,6 +41,7 @@ def merge_to_csv():
             names = workbook.sheet_names()
             sheetAmount = len(names)
             for index in range(sheetAmount):
+                print("Reading sheet #: ", index+1)
                 sheet = workbook.sheet_by_index(index)
                 tempSheetName = "sheet" + str(index+1) + ".csv"
                 with open(temporaryCsvFileName, 'a+', newline="") as file:
@@ -46,10 +49,13 @@ def merge_to_csv():
                     for row in range(sheet.nrows):
                         if 'Name: ' in str(sheet.row_values(row)):
                             if not nameBeenPrinted:
+                                oldName = sheet.row_values(row)
                                 col.writerow(sheet.row_values(row))
                                 nameBeenPrinted = True
                             else:
-                                pass
+                                newName = sheet.row_values(row)
+                                if oldName != newName:
+                                    col.writerow(sheet.row_values(row))    
                         else:
                             col.writerow(sheet.row_values(row))
                     col.writerow('')
