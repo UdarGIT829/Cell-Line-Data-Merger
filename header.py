@@ -91,6 +91,12 @@ def csv_to_data(inputFilename):
         if len(row) != 0:
             if len(row[0]) != 0:
                 if "Name:" in row[0]:
+                    if activeJob != None:
+                        print("==========")
+                        print("Saved JOB!")
+                        print("==========")
+                        jobList.append(activeJob)
+                        activeJob = None
                     name = str(row[0][6:])
                 elif "SET UP DATE:" in row[0]:
                     date = str(row[0][12:])
