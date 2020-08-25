@@ -31,6 +31,11 @@ def merge_to_csv_new():
         #print(os.path.abspath(path))
         excelFiles.append(path)
 
+    for path in excelFiles:
+        if "master.xlsx" in str(path):
+            print("Ignoring master file")
+            excelFiles.remove(path)
+
     print(excelFiles)
     tempNameList = list()
     for path in excelFiles:
@@ -117,6 +122,9 @@ def csv_to_data_new(inputFilename):
             else:
                 #if no name row provided, assume it existed elsewhere
                 print("no Name in row: ",thisRow)
+                if "TREATMENT PLATES:" in thisRow:
+                    print("Unused treatment plate detected, ignoring rest of sheet...")
+                    break
                 tempName = jobList[-1].Name
             
             #setup variable that scans down from thisRow until it hits next "Name" or Control Plate
@@ -133,7 +141,6 @@ def csv_to_data_new(inputFilename):
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
 
             #Follow process as for Name with Date
-            print("Scanner on: ", scanner)
             if "SET UP DATE:" in scannerRow[0]:
                 tempDate = str(scannerRow[0][12:]).replace(" ", "")
                 #if date was found, then scan down again
@@ -150,14 +157,12 @@ def csv_to_data_new(inputFilename):
             activeJob = job(tempName, tempDate)
             print("Name: ",tempName, "| Date: ", tempDate)
             #push scanner to next data row
-            print(scannerRow, "|Row: ", scanner)
             while not "CONTROL" in scannerRow[0]:
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
             while scannerRow[0] == "":
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
             
             #Input barcodes into dayList, cellLine-ID's will be in controlCellLines
-            print(scannerRow)
             if "CONTROL" in scannerRow[0]:
                 print("Successfully found Control Plate")
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
@@ -168,8 +173,7 @@ def csv_to_data_new(inputFilename):
                     dayList.append(dayBarcode)
                     controlCellLines = dict()
                     for column in range(2, len(scannerRow)):
-                        if scannerRow[column] != "":
-                            print("Control CellLine-ID Length: ",len(scannerRow[column]))
+                        if scannerRow[column] != "" and not("Cell Line" in scannerRow[column]) and not("empty" in scannerRow[column]):
                             controlCellLines[scannerRow[column]] = column-1
                     scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
             else:
@@ -200,7 +204,9 @@ def csv_to_data_new(inputFilename):
             
             print("Drug Amount: ", drugAmount)
             print("CellLine amount: ", cellLineAmount)
-            
+            if cellLineAmount == 0:
+                print("Empty plate, ignoring rest of sheet...")
+                break
             predicted_treatmentPlate_amount = math.ceil((cellLineAmount/8) * drugAmount)
             print("Expecting ", predicted_treatmentPlate_amount, " treatment plates.")
 
@@ -224,7 +230,7 @@ def csv_to_data_new(inputFilename):
                 temp_treatment_plate = treatment_plate()
 
                 treatmentColumnInfo = list()
-
+                        
                 for row in treatment_data_range:
                     treatment_data = initialStructure[row]
 
@@ -236,24 +242,31 @@ def csv_to_data_new(inputFilename):
                         treatmentColumnInfo = treatment_data
                     else:
                         #Treatment Data
-                        print("Treatment data length = ",len(treatment_data))
-                        tempDrugID = treatment_data[0]
-                        tempDrugBC = treatment_data[1]
-                        tempTreatmentCellLines = list()
-                        for value in range(2, len(treatment_data) ):
-                            treatmentColumnNumber = value-1
-                            tempT_cellline_id = treatment_data[value]
-                            tempCposition = tempControl.cellLines.get(treatment_data[value])
-                            tempTposition = treatmentColumnInfo[treatmentColumnNumber]
-                            tempTreatmentCellLines.append( (tempCposition,tempTposition,tempT_cellline_id) )
-                            #print(treatment_data[value]," is in control position ", tempControl.cellLines.get(treatment_data[value]), " and is in treatment position ", treatmentColumnInfo[treatmentColumnNumber] )
-                        tempDrug_treatment = drug_treatment(tempDrugID,tempDrugBC,tempTreatmentCellLines)
-                        temp_treatment_plate.addToTreatments(tempDrug_treatment)
+                        treatment_data_length = len(treatment_data)
+                        print("Treatment data length = ",treatment_data_length)
+                        if treatment_data_length < 3:
+                            print("Ignoring non-data row")
+                        else:
+                            tempDrugID = treatment_data[0]
+                            tempDrugBC = treatment_data[1]
+                            tempTreatmentCellLines = list()
+                            for value in range(2, len(treatment_data) ):
+                                treatmentColumnNumber = value-1
+                                tempT_cellline_id = treatment_data[value]
+                                tempCposition = tempControl.cellLines.get(treatment_data[value])
+                                tempTposition = treatmentColumnInfo[treatmentColumnNumber]
+                                tempTreatmentCellLines.append( (tempCposition,tempTposition,tempT_cellline_id) )
+                                #print(treatment_data[value]," is in control position ", tempControl.cellLines.get(treatment_data[value]), " and is in treatment position ", treatmentColumnInfo[treatmentColumnNumber] )
+                            tempDrug_treatment = drug_treatment(tempDrugID,tempDrugBC,tempTreatmentCellLines)
+                            temp_treatment_plate.addToTreatments(tempDrug_treatment)
                     scanner = max(treatment_data_range)
                 
                 temp_treatment_plates.append(temp_treatment_plate)
             activeJob.setTreatments(temp_treatment_plates)
             jobList.append(activeJob)
+            print("=================")
+            print("====JOB SAVED====")
+            print("=================")
                     
             ignoreList.extend(range(0,scanner+1))
             print("ignoring from: 0 to ", scanner)
