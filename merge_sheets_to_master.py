@@ -61,6 +61,19 @@ def merge_to_csv():
     
     return(tempNameList)
 
+def final_data_checker(csvFileName):
+    print("Commencing final check before exporting")
+    with open(csvFileName, 'r') as csvFile:
+        lines = csvFile.readlines()
+        csvFile.close()
+    with open(csvFileName, 'w') as csvFile:
+        for line in lines:
+            if ",," in line:
+                print("\tError found in line: ", line)
+            else:
+                csvFile.write(line)
+    return csvFileName
+
 def csv_to_master(csvFileName):
     workbook = Workbook('master.xlsx',{'strings_to_numbers': True,'constant_memory': True})
     worksheet = workbook.add_worksheet()
@@ -133,7 +146,10 @@ def csv_to_data(inputFilename):
             
             #Establish scanner and scannerRow variables to seperately iterate through sheet without affecting for loop variable
             scanner = rowNum
-            scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
+            if "Name:" in thisRow[0]:
+                scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
+            else:
+                scannerRow = initialStructure[scanner]
 
             #Push scanner down until data is detected
             while initialStructure[scanner] == "":

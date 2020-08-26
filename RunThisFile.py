@@ -28,8 +28,11 @@ for inputFilename in inputFilenames:
         modified_to_csv(day.asOutput(), needsHeader)
         needsHeader = False
 
+#Check data before export
+finalCSV = final_data_checker("tempMaster.csv")
+
 #export data to xlsx using given format
-csv_to_master("tempMaster.csv")
+csv_to_master(finalCSV)
 
 clean_temp_files()
 
