@@ -1,7 +1,19 @@
+"""
+Made by: Viraat Udar
+
+Latest updates can be found at: https://github.com/UdarGIT829/Cell-Line-Data-Merger
+
+"""
+
 from merge_sheets_to_master import *
 from pathlib import Path
 
 ignoreList = list( ("~", "master.xlsx", "master.csv") )
+
+#Clear old log
+clearLog("log.txt")
+
+log_file = logData()
 
 #merge xlsx files, with all sheets to csv
 inputFilenames = merge_to_csv_new()
@@ -9,9 +21,10 @@ inputFilenames = merge_to_csv_new()
 #store data from csv
 needsHeader = True
 for inputFilename in inputFilenames:
-    tempJobList = csv_to_data_new(inputFilename)
+    tempJobList = csv_to_data(inputFilename)
+    print("\n",inputFilename ,"processed!\n")
     for day in tempJobList:
-        print("For: ",inputFilename,"\n\t",day)
+        print("For: ",inputFilename,"\n\t",day,"\n")
         modified_to_csv(day.asOutput(), needsHeader)
         needsHeader = False
 
@@ -19,3 +32,5 @@ for inputFilename in inputFilenames:
 csv_to_master("tempMaster.csv")
 
 clean_temp_files()
+
+closeLog(log_file)

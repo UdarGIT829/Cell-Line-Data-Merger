@@ -28,15 +28,14 @@ def merge_to_csv_new():
 
     excelFiles = list()
     for path in Path(directory).rglob('*.xlsx'):
-        #print(os.path.abspath(path))
         excelFiles.append(path)
 
     for path in excelFiles:
         if "master.xlsx" in str(path):
-            print("Ignoring master file")
+            print("Ignoring master.xlsx, presumed from past run")
             excelFiles.remove(path)
 
-    print(excelFiles)
+    print("All files being read: ", excelFiles)
     tempNameList = list()
     for path in excelFiles:
         print( "Reading file: ", os.path.basename(path) )
@@ -89,11 +88,11 @@ def incrementScanner(rowNumber, maxSize):
         raise Exception('End of file reached!')
     return (rowNumber+1)
 
-def csv_to_data_new(inputFilename):
+def csv_to_data(inputFilename):
     initialStructure = list()
     jobList = list()
     activeJob = job()
-    print(inputFilename)
+    print("Analysing sheet csv: ",inputFilename)
 #import from csv into temporary structure
     with open(inputFilename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
@@ -112,7 +111,7 @@ def csv_to_data_new(inputFilename):
             if "Name:" in thisRow[0]:
                 tempName = thisRow[0].replace("Name: ","").replace("Name:","")
                 if tempName == "":
-                    print("Missing Name", thisRow)
+                    print("\tMissing Name", thisRow)
                     for column in range(1,len(row)):
                         if thisRow[column] != "":
                             tempName = thisRow[column]
@@ -121,22 +120,17 @@ def csv_to_data_new(inputFilename):
                 #tempName will now store name of job, if none was entered it will contain "N/A"
             else:
                 #if no name row provided, assume it existed elsewhere
-                print("no Name in row: ",thisRow)
+                print("\tno Name in row: ",thisRow)
                 if "TREATMENT PLATES:" in thisRow:
-                    print("Unused treatment plate detected, ignoring rest of sheet...")
+                    print("\t\tUnused treatment plate detected, ignoring rest of sheet...")
                     break
                 tempName = jobList[-1].Name
             
-            #setup variable that scans down from thisRow until it hits next "Name" or Control Plate
-            if not "CONTROL" in initialStructure[rowNum][0]:
-                scanner = rowNum + 1
-            else: 
-                scanner = rowNum
-            if scanner >= structure_size:
-                print("End of file reached unexpectedly in ", inputFilename)
-                break
-            #Push scanner down until it sees something in leftmost cell
-            scannerRow = initialStructure[scanner]
+            #Establish scanner and scannerRow variables to seperately iterate through sheet without affecting for loop variable
+            scanner = rowNum
+            scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
+
+            #Push scanner down until data is detected
             while initialStructure[scanner] == "":
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
 
@@ -149,28 +143,32 @@ def csv_to_data_new(inputFilename):
             else:
                 #if date not found, scanner will be on Control Plate
                 #set date as with name and proceed with Control Plate
-                print("no Date in row: ",scannerRow)
+                print("\tNo Date in row: ",scannerRow)
                 tempDate = jobList[-1].Date
+                print("Using last job's date: ", tempDate)
 
             #AT THIS POINT tempName, tempDate contain name and date
             #initialize job
             activeJob = job(tempName, tempDate)
-            print("Name: ",tempName, "| Date: ", tempDate)
+            print("Job Initialized with ~ Name: ",tempName, "| Date: ", tempDate)
             #Input concentrations for Drugs
+            specificDrugInfo = dict()
             while not "Starting Concentration" in scannerRow[1]:
-                scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
+                if "CONTROL" in scannerRow[0]:
+                    break
+                else:
+                    scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
             if "Starting Concentration" in scannerRow[1]:
                 print("Successfully found starting concentration area...")
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
                 #Count amount of drugs in variable
                 earlyDrugAmount = 0
                 #Establish temporary dictionary to store Starting concentration and dilution factor for various drug treatments
-                specificDrugInfo = dict()
                 while ( not "CONTROL" in scannerRow[0] ) and ( len(scannerRow[0]) > 0 ):
                     earlyDrugAmount += 1
                     specificDrugInfo[ scannerRow[0] ] = ( scannerRow[1], scannerRow[2] )
                     scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
-                print(specificDrugInfo)
+                print("Starting dilution and dilution factor info: ", specificDrugInfo)
 
             #push scanner to next data row
             while not "CONTROL" in scannerRow[0]:
@@ -182,7 +180,7 @@ def csv_to_data_new(inputFilename):
             if "CONTROL" in scannerRow[0]:
                 print("Successfully found Control Plate")
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
-                print(scannerRow)
+                #print(scannerRow)
                 dayList = list()
                 while "Day" in scannerRow[0]:
                     dayBarcode = scannerRow[1]
@@ -193,7 +191,7 @@ def csv_to_data_new(inputFilename):
                             controlCellLines[scannerRow[column]] = column-1
                     scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner]
             else:
-                print("Control not found: ", scannerRow)    
+                print("\tControl not found: ", scannerRow)    
             #at this point all Control Days have been inputted, and scanner will point at next row
             #update activeJob with control plates
             tempControl = control_plate(dayList[0], dayList[1], controlCellLines)
@@ -221,7 +219,7 @@ def csv_to_data_new(inputFilename):
             print("Drug Amount: ", drugAmount)
             print("CellLine amount: ", cellLineAmount)
             if cellLineAmount == 0:
-                print("Empty plate, ignoring rest of sheet...")
+                print("\tEmpty plate, ignoring rest of sheet...")
                 break
             predicted_treatmentPlate_amount = math.ceil((cellLineAmount/8) * drugAmount)
             print("Expecting ", predicted_treatmentPlate_amount, " treatment plates.")
@@ -237,7 +235,7 @@ def csv_to_data_new(inputFilename):
             moreThanExpected = len(treatments_data_range) - predicted_treatmentPlate_amount
             while moreThanExpected > 0:
                 del treatments_data_range[-1]
-                print(moreThanExpected, " more treatment plates than expected, deleting one...")
+                print("\t",moreThanExpected, " more treatment plates than expected, ignoring last one...")
                 moreThanExpected = len(treatments_data_range) - predicted_treatmentPlate_amount
 
             temp_treatment_plates = list()
@@ -260,7 +258,7 @@ def csv_to_data_new(inputFilename):
                         #Treatment Data
                         treatment_data_length = len(treatment_data)
                         if treatment_data_length < 3:
-                            print("Ignoring non-data row")
+                            print("\tIgnoring non-data row", treatment_data)
                         else:
                             tempDrugID = treatment_data[0]
                             tempDrugBC = treatment_data[1]
@@ -271,8 +269,9 @@ def csv_to_data_new(inputFilename):
                                 tempCposition = tempControl.cellLines.get(treatment_data[value])
                                 tempTposition = treatmentColumnInfo[treatmentColumnNumber]
                                 tempTreatmentCellLines.append( (tempCposition,tempTposition,tempT_cellline_id) )
-                                testerino = specificDrugInfo.get(tempDrugID)
-                                print(testerino, type(testerino))
+                                checkDrugInfo = specificDrugInfo.get(tempDrugID, "?")
+                                if checkDrugInfo == "?":
+                                    print("\tStarting dilution and dilution factor not found for ", tempDrugID)
                                 #tempStartingDilution = specificDrugInfo.get(tempDrugID)[0]
                                 #tempDilutionFactor = specificDrugInfo.get(tempDrugID)[1]
                                 print(treatment_data[value]," is in control position ", tempControl.cellLines.get(treatment_data[value]), " and is in treatment position ", treatmentColumnInfo[treatmentColumnNumber] )
@@ -288,24 +287,9 @@ def csv_to_data_new(inputFilename):
             print("=================")
                     
             ignoreList.extend(range(0,scanner+1))
-            print("ignoring from: 0 to ", scanner)
-            
+            print("Ignoring processed range from: 0 to ", scanner)
+
     return jobList
-
-def data_to_xlsx(jobList):
-    needHeader = True
-
-    if os.path.exists("tempMaster.csv"):
-        print("deleting old master csv")
-        os.remove("tempMaster.csv")
-
-    for singularjob in jobList:
-        finalcsvName = modified_to_csv( singularjob.asOutput())
-        needHeader = False
-        print("Exported to: ", finalcsvName)
-    csv_to_master(finalcsvName)
-
-
 
 def clean_temp_files():
     directory = os.path.dirname(__file__)

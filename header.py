@@ -1,6 +1,20 @@
-separator = ","
 import csv
+import sys
 from merge_sheets_to_master import *
+
+def clearLog(logFileName):
+    if os.path.exists(logFileName):
+        os.remove(logFileName)
+    else:
+        print("No past log to remove...\n")
+
+def logData():
+    log = open("log.txt", 'a+')
+    sys.stdout = log
+    return log
+
+def closeLog(log):
+    log.close()
 
 class control_plate:
     def __init__(self,day1bc, day7bc, cellLines):
@@ -63,7 +77,6 @@ class job:
                         dTreatment.drugID, dTreatment.startingDilution , dTreatment.dilutionFactor, self.control.day1BC, Control_position,
                         self.control.day7BC, Control_position) )
                         output.append(row)
-        print(output)
         return output
 
     def setName(self, newName):
