@@ -3,7 +3,6 @@ Made by: Viraat Udar
 
 Latest updates can be found at: https://github.com/UdarGIT829/Cell-Line-Data-Merger
 
-
 """
 
 from merge_sheets_to_master import *
