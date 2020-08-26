@@ -17,10 +17,12 @@ class control_plate:
         return cellLines
 
 class drug_treatment:
-    def __init__(self,drugName, TR_barcode, cellLines):
+    def __init__(self,drugName, TR_barcode, cellLines, startingDilutionInput = "?", dilutionFactorInput = "?"):
         self.barcode = TR_barcode
         self.drugID = drugName
         self.cellLines = cellLines #will be stored as: (Cposition ,Tposition, cellLine-ID) eg=(1-2,C1 ; 3-4, C2 ; ...)
+        self.startingDilution = startingDilutionInput 
+        self.dilutionFactor = dilutionFactorInput
 
 class treatment_plate:
     def __init__(self,drug_treatments = None):
@@ -58,7 +60,7 @@ class job:
                         Treatmentposition = cLine[1]
                         cl_name = cLine[2]
                         row.extend( (dTreatment.barcode, Treatmentposition, self.Name, cl_name, self.Date,
-                        dTreatment.drugID, " ? ", " ? ", self.control.day1BC, Control_position,
+                        dTreatment.drugID, dTreatment.startingDilution , dTreatment.dilutionFactor, self.control.day1BC, Control_position,
                         self.control.day7BC, Control_position) )
                         output.append(row)
         print(output)

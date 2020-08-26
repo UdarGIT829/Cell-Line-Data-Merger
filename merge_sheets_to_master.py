@@ -156,6 +156,22 @@ def csv_to_data_new(inputFilename):
             #initialize job
             activeJob = job(tempName, tempDate)
             print("Name: ",tempName, "| Date: ", tempDate)
+            #Input concentrations for Drugs
+            while not "Starting Concentration" in scannerRow[1]:
+                scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
+            if "Starting Concentration" in scannerRow[1]:
+                print("Successfully found starting concentration area...")
+                scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
+                #Count amount of drugs in variable
+                earlyDrugAmount = 0
+                #Establish temporary dictionary to store Starting concentration and dilution factor for various drug treatments
+                specificDrugInfo = dict()
+                while ( not "CONTROL" in scannerRow[0] ) and ( len(scannerRow[0]) > 0 ):
+                    earlyDrugAmount += 1
+                    specificDrugInfo[ scannerRow[0] ] = ( scannerRow[1], scannerRow[2] )
+                    scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
+                print(specificDrugInfo)
+
             #push scanner to next data row
             while not "CONTROL" in scannerRow[0]:
                 scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
@@ -243,7 +259,6 @@ def csv_to_data_new(inputFilename):
                     else:
                         #Treatment Data
                         treatment_data_length = len(treatment_data)
-                        print("Treatment data length = ",treatment_data_length)
                         if treatment_data_length < 3:
                             print("Ignoring non-data row")
                         else:
@@ -256,8 +271,12 @@ def csv_to_data_new(inputFilename):
                                 tempCposition = tempControl.cellLines.get(treatment_data[value])
                                 tempTposition = treatmentColumnInfo[treatmentColumnNumber]
                                 tempTreatmentCellLines.append( (tempCposition,tempTposition,tempT_cellline_id) )
-                                #print(treatment_data[value]," is in control position ", tempControl.cellLines.get(treatment_data[value]), " and is in treatment position ", treatmentColumnInfo[treatmentColumnNumber] )
-                            tempDrug_treatment = drug_treatment(tempDrugID,tempDrugBC,tempTreatmentCellLines)
+                                testerino = specificDrugInfo.get(tempDrugID)
+                                print(testerino, type(testerino))
+                                #tempStartingDilution = specificDrugInfo.get(tempDrugID)[0]
+                                #tempDilutionFactor = specificDrugInfo.get(tempDrugID)[1]
+                                print(treatment_data[value]," is in control position ", tempControl.cellLines.get(treatment_data[value]), " and is in treatment position ", treatmentColumnInfo[treatmentColumnNumber] )
+                            tempDrug_treatment = drug_treatment(tempDrugID,tempDrugBC,tempTreatmentCellLines, specificDrugInfo.get(tempDrugID, "?")[0], specificDrugInfo.get(tempDrugID," ?")[1] )
                             temp_treatment_plate.addToTreatments(tempDrug_treatment)
                     scanner = max(treatment_data_range)
                 
