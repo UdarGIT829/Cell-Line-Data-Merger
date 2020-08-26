@@ -17,7 +17,7 @@ import math
 from header import *
 
 from pathlib import Path
-def merge_to_csv_new():
+def merge_to_csv():
     directory = os.path.dirname(__file__)
 
     temporaryCsvFileName = "tempMaster.csv"
@@ -34,6 +34,10 @@ def merge_to_csv_new():
         if "master.xlsx" in str(path):
             print("Ignoring master.xlsx, presumed from past run")
             excelFiles.remove(path)
+
+    if len(excelFiles) == 0:
+        print("No files found, exiting...")
+        sys.exit()
 
     print("All files being read: ", excelFiles)
     tempNameList = list()
@@ -54,6 +58,7 @@ def merge_to_csv_new():
                     for row in range(sheet.nrows):
                         col.writerow(sheet.row_values(row))
             file.close()
+    
     return(tempNameList)
 
 def csv_to_master(csvFileName):

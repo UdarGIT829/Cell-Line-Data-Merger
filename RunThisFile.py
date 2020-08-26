@@ -16,7 +16,7 @@ clearLog("log.txt")
 log_file = logData()
 
 #merge xlsx files, with all sheets to csv
-inputFilenames = merge_to_csv_new()
+inputFilenames = merge_to_csv()
 
 #store data from csv
 needsHeader = True
