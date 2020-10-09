@@ -189,7 +189,12 @@ def csv_to_data(inputFilename):
                     earlyDrugAmount += 1
                     specificDrugInfo[ scannerRow[0] ] = ( scannerRow[1], scannerRow[2] )
                     scanner = incrementScanner(scanner, structure_size); scannerRow = initialStructure[scanner] 
-                print("Starting dilution and dilution factor info: ", specificDrugInfo)
+                activeJob.setSpecificInfo(specificDrugInfo)
+            else:
+                print("\tStarting concentration not found, using last starting concentration...")
+                specificDrugInfo = jobList[-1].specificInfoDict
+
+            print("Starting dilution and dilution factor info: ", specificDrugInfo)
 
             #push scanner to next data row
             while not "CONTROL" in scannerRow[0]:

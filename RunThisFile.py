@@ -8,13 +8,20 @@ Latest updates can be found at: https://github.com/UdarGIT829/Cell-Line-Data-Mer
 
 from merge_sheets_to_master import *
 from pathlib import Path
+import platform
 
 ignoreList = list( ("~", "master.xlsx", "master.csv") )
 
-#Clear old log
-clearLog("log.txt")
+posixFlag = False
+if "Linux" in platform.platform():
+    print("Expecting Posix FS, using log file output...")
+    posixFlag = True
 
-log_file = logData()
+if posixFlag:
+    #Clear old log
+    clearLog("log.txt")
+
+    log_file = logData()
 
 #merge xlsx files, with all sheets to csv
 inputFilenames = merge_to_csv()
@@ -37,4 +44,5 @@ csv_to_master(finalCSV)
 
 clean_temp_files()
 
-closeLog(log_file)
+if posixFlag:
+    closeLog(log_file)

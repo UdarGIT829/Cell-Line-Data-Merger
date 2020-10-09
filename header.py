@@ -49,15 +49,18 @@ class treatment_plate:
         self.drug_treatments.append(newDrugTreatment)
 
 class job:
-    def __init__(self,name = None,date = None,control = None, treatments = None):
+    def __init__(self,name = None,date = None,control = None, treatments = None, specificInfo = None):
         if control != None:
             self.control = control
         if treatments != None:
             self.treatments = treatments
         else:
             self.treatments = list()
+        if specificInfo == None:
+            self.specificInfoDict = dict()
         self.Name = name
         self.Date = date
+        
     def __str__(self):
         toString = list()
         toString.extend( (self.Name,self.Date, self.control.cellLines) )
@@ -87,4 +90,6 @@ class job:
         self.control = control
     def setTreatments(self, treatments):
         self.treatments.append(treatments)
+    def setSpecificInfo(self, specificInfo):
+        self.specificInfoDict = specificInfo
 
