@@ -1,0 +1,3 @@
+from merge_sheets_to_master import clean_temp_files
+import os
+clean_temp_files()
